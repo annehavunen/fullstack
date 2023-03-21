@@ -1,11 +1,11 @@
-Sekvenssikaavio
 ```mermaid
+sequenceDiagram
     participant selain
     participant palvelin
 
     selain->>palvelin: POST https://studies.cs.helsinki.fi/exampleapp/new_note
     activate palvelin
-    Note right of palvelin: Palvelin luo muistiinpanoa vastaavan olion ja laittaa sen muistiinpanot sisältävään taulukkoon
+    Note right of selain: Palvelin luo muistiinpanoa vastaavan olion ja laittaa sen muistiinpanot sisältävään taulukkoon
     palvelin-->>selain: Uudelleenohjauspyyntö
     deactivate palvelin
 

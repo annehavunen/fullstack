@@ -1,5 +1,5 @@
 ```mermaid
-Sekvenssikaavio
+sequenceDiagram
     participant selain
     participant palvelin
 
