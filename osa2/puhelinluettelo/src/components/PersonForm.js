@@ -1,3 +1,6 @@
+import axios from 'axios'
+
+
 const PersonForm = (props) => {
   const newName = props.newName
   const setNewName = props.setNewName
@@ -14,15 +17,21 @@ const PersonForm = (props) => {
       name: newName,
       number: newNumber
   }
-    const names = persons.map(person => person.name)
-    const exists = names.indexOf(nameObject.name)
-    if (exists === -1) {
-        setPersons(persons.concat(nameObject))
-        setNewName('')
-        setNewNumber('')
-    } else {
-        alert(`${newName} is already added to phonebook`)
-    }
+
+  const names = persons.map(person => person.name)
+  const exists = names.indexOf(nameObject.name)
+  if (exists === -1) {
+    axios
+    .post('http://localhost:3001/persons', nameObject)
+    .then(response => {
+      setPersons(persons.concat(response.data))
+      setNewName('')
+      setNewNumber('')
+      console.log(response.data)
+  })
+  } else {
+      alert(`${newName} is already added to phonebook`)
+  }
 }
 
   return (

@@ -12,7 +12,7 @@ const App = () => {
   const [newFilter, setNewFilter] = useState('')
 
   const namesToShow = newFilter === ''
-    ? persons    
+    ? persons
     : persons.filter(person => person.name.toLowerCase().includes(newFilter.toLowerCase()))
 
     useEffect(() => {
@@ -26,7 +26,7 @@ const App = () => {
     }, [])
 
   const handleNameChange = (event) => {     
-    setNewName(event.target.value)  
+    setNewName(event.target.value)
   }
 
   const handleNumberChange = (event) => {
@@ -57,5 +57,6 @@ const App = () => {
     </div>
   )
 }
+
 
 export default App
