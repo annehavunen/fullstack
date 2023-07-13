@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
+import phonebookService from './services/phonebook'
 
 
 const App = () => {
@@ -16,12 +16,10 @@ const App = () => {
     : persons.filter(person => person.name.toLowerCase().includes(newFilter.toLowerCase()))
 
     useEffect(() => {
-      console.log('effect')
-      axios
-        .get('http://localhost:3001/persons')
-        .then(response => {
-          console.log('promise fulfilled')
-          setPersons(response.data)
+      phonebookService
+        .getAll()
+        .then(filteredPersons => {
+          setPersons(filteredPersons)
         })
     }, [])
 
@@ -35,6 +33,15 @@ const App = () => {
 
   const handleFilterChange = (event) => {
     setNewFilter(event.target.value)
+  }
+
+  const handleDelete = (id) => {
+    const person = persons.find(p => p.id === id)
+    if (window.confirm(`Delete ${person.name}?`)) {
+      phonebookService
+        .deletePerson(id)
+        .then(() => setPersons(persons.filter(p => p.id !== id)))
+    }
   }
 
   return (
@@ -53,7 +60,7 @@ const App = () => {
         setPersons={setPersons}
       />
       <h2>Numbers</h2>
-      <Persons persons={namesToShow}/>
+      <Persons persons={namesToShow} deletePerson={handleDelete}/>
     </div>
   )
 }

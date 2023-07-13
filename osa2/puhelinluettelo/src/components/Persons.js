@@ -1,7 +1,18 @@
-const Persons = ({persons}) => {
+import Person from './Person'
+
+
+const Persons = ({persons, deletePerson}) => {
   return (
     <div>
-      <ul>{persons.map(person => <li key={person.id}>{person.name} {person.number}</li>)}</ul> 
+      {persons.map((person) => 
+        (
+          <Person 
+            key={person.name}
+            person={person}
+            deletePerson={() => deletePerson(person.id)}
+          />
+        )
+      )}
     </div>
   )
 }
