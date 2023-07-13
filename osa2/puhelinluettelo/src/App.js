@@ -3,6 +3,8 @@ import Persons from './components/Persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import phonebookService from './services/phonebook'
+import Notification from './components/Notification'
+import Error from './components/Error'
 
 
 const App = () => {
@@ -10,6 +12,8 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [newFilter, setNewFilter] = useState('')
+  const [notificationMessage, setNotificationMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   const namesToShow = newFilter === ''
     ? persons
@@ -37,16 +41,23 @@ const App = () => {
 
   const handleDelete = (id) => {
     const person = persons.find(p => p.id === id)
-    if (window.confirm(`Delete ${person.name}?`)) {
+    const name = person.name
+    if (window.confirm(`Delete ${name}?`)) {
       phonebookService
         .deletePerson(id)
-        .then(() => setPersons(persons.filter(p => p.id !== id)))
+        .then(() => {
+          setPersons(persons.filter(p => p.id !== id))
+          setNotificationMessage(`Deleted ${name}`)
+          setTimeout(() => {setNotificationMessage(null)}, 5000)
+        })
     }
   }
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notificationMessage} />
+      <Error message={errorMessage} />
       <Filter handleFilterChange={handleFilterChange} newFilter={newFilter}/>
       <h2>Add a new</h2>
       <PersonForm
@@ -58,6 +69,8 @@ const App = () => {
         setNewNumber={setNewNumber}
         handleNumberChange={handleNumberChange}
         setPersons={setPersons}
+        setNotificationMessage={setNotificationMessage}
+        setErrorMessage={setErrorMessage}
       />
       <h2>Numbers</h2>
       <Persons persons={namesToShow} deletePerson={handleDelete}/>

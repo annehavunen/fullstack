@@ -10,6 +10,8 @@ const PersonForm = (props) => {
   const handleNumberChange = props.handleNumberChange
   const persons = props.persons
   const setPersons = props.setPersons
+  const setNotificationMessage = props.setNotificationMessage
+  const setErrorMessage = props.setErrorMessage
 
   const addName = (event) => {
     event.preventDefault()
@@ -26,6 +28,8 @@ const PersonForm = (props) => {
       .create(nameObject)
       .then(returnedPerson => {
         setPersons(persons.concat(returnedPerson))
+        setNotificationMessage(`Added ${newName}`)
+        setTimeout(() => {setNotificationMessage(null)}, 5000)
         setNewName('')
         setNewNumber('')
       })
@@ -38,13 +42,14 @@ const PersonForm = (props) => {
         .update(existingPerson.id, changedPerson)
         .then(returnedPerson => {
           setPersons(persons.map(person => person.name !== newName ? person : returnedPerson))
+          setNotificationMessage(`Changed ${newName}`)
+          setTimeout(() => {setNotificationMessage(null)}, 5000)
           setNewName('')
           setNewNumber('')
         })
         .catch(error => {
-          alert(
-            `The person '${newName}' was already deleted from server`
-          )
+          setErrorMessage(`Information of ${newName} has already been removed from server`)
+          setTimeout(() => {setErrorMessage(null)}, 5000)
           setPersons(persons.filter(p => p.name !== newName))
         })
     }
