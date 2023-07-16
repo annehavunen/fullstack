@@ -3,8 +3,7 @@ import axios from 'axios'
 import Country from './components/Country'
 
 
-const Display = ({ countries }) => {
-  const [name, setName] = useState('')
+const Display = ({ countries, clickCountry }) => {
   const [capital, setCapital] = useState('')
   const [area, setArea] = useState('')
   const [languages, setLanguages] = useState([])
@@ -15,7 +14,6 @@ const Display = ({ countries }) => {
       axios
         .get(`https://studies.cs.helsinki.fi/restcountries/api/name/${countries[0].name.common}`)
         .then(response => {
-          setName(response.data.name.common)
           setCapital(response.data.capital)
           setArea(response.data.area)
           const languageList = Object.values(response.data.languages)
@@ -27,7 +25,13 @@ const Display = ({ countries }) => {
 
   if (countries.length === 1) {
     return (
-      <Country name={name} capital={capital} area={area} languages={languages} flag={flag}></Country>
+      <Country 
+        name={countries[0].name.common}
+        capital={capital}
+        area={area}
+        languages={languages}
+        flag={flag}>
+      </Country>
     )
   }
 
@@ -35,7 +39,10 @@ const Display = ({ countries }) => {
     return (
       <ul>
         {countries.map(country => (
-          <li key={country.name.common}>{country.name.common}</li>
+          <li key={country.name.common}>
+            {country.name.common}
+            <button onClick={() => clickCountry(country)}>show</button>
+          </li>
         ))}
       </ul>
     )
@@ -72,14 +79,19 @@ const App = () => {
     setNewFilter(event.target.value)
   }
 
+  const clickCountry = (country) => {
+    setCountries([country])
+  }
+
   return (
     <div>
       <form>
         find countries <input value={newFilter} onChange={handleChange} />
       </form>
-      <Display countries={countries}></Display>
+      <Display countries={countries} clickCountry={clickCountry}></Display>
     </div>
   )
 }
+
 
 export default App;
