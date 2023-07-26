@@ -33,6 +33,10 @@ const PersonForm = (props) => {
         setNewName('')
         setNewNumber('')
       })
+      .catch(error => {
+        setErrorMessage(error.response.data['error'])
+        setTimeout(() => {setErrorMessage(null)}, 5000)
+      })
 
     } else if (window.confirm(`${newName} is already added to the phonebook. Replace the old number with a new one?`)) {
       const existingPerson = persons.find(person => person.name === newName)
@@ -48,9 +52,14 @@ const PersonForm = (props) => {
           setNewNumber('')
         })
         .catch(error => {
-          setErrorMessage(`Information of ${newName} has already been removed from server`)
-          setTimeout(() => {setErrorMessage(null)}, 5000)
-          setPersons(persons.filter(p => p.name !== newName))
+          if (error.response.status === 404) {
+            setErrorMessage(`Information of ${newName} has already been removed from server`)
+            setTimeout(() => {setErrorMessage(null)}, 5000)
+            setPersons(persons.filter(p => p.name !== newName))
+          } else if (error.response.status === 400) {
+            setErrorMessage(error.response.data['error'])
+            setTimeout(() => {setErrorMessage(null)}, 5000)
+          }
         })
     }
   }
