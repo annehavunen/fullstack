@@ -2,6 +2,8 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
+const bcrypt = require('bcrypt')
+const User = require('../models/user')
 const Blog = require('../models/blog')
 const helper = require('./test_helper')
 
@@ -153,6 +155,150 @@ describe('when there are initially some blogs saved', () => {
       expect(updatedBlog.likes).toBe(15)
       expect(updatedBlog).not.toEqual(newBlog)
     })
+  })
+})
+
+describe('when there is initially one user at db', () => {
+  beforeEach(async () => {
+    await Blog.deleteMany({})
+    await Blog.insertMany(helper.initialBlogs)
+
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({ username: 'root', passwordHash })
+
+    await user.save()
+  })
+
+  test('creation succeeds with a fresh username', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'fuser',
+      name: 'Fresh User',
+      password: 'supersecret',
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length + 1)
+
+    const usernames = usersAtEnd.map(u => u.username)
+    expect(usernames).toContain(newUser.username)
+  })
+
+  test('creation fails if username is already taken', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'root',
+      name: 'Superuser',
+      password: 'salainen',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('expected `username` to be unique')
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
+  })
+
+  test('creation fails if username or password is missing', async () => {
+    const userWithoutUsername = {
+      name: 'Name Less',
+      password: 'topsecret'
+    }
+  
+    const userWithoutPassword = {
+      username: 'passwordless',
+      name: 'No Pass'
+    }
+
+    const userWithoutUsernameAndPassword = {
+      name: 'No Thing'
+    }
+  
+    await api
+      .post('/api/users')
+      .send(userWithoutUsername)
+      .expect(400)
+  
+    await api
+      .post('/api/users')
+      .send(userWithoutPassword)
+      .expect(400)
+
+    await api
+      .post('/api/users')
+      .send(userWithoutUsernameAndPassword)
+      .expect(400)
+  })
+
+  test('creation fails with too short username or password', async () => {
+    const tooShortUsername = {
+      username: 'us',
+      name: 'Too Short',
+      password: 'ultimatesecret'
+    }
+  
+    const tooShortPassword = {
+      username: 'username',
+      name: 'Too Short',
+      password: 'ul'
+    }
+  
+    const tooShortUsernameAndPassword = {
+      username: 'us',
+      name: 'Too Short',
+      password: 'ul'
+    }
+
+    await api
+    .post('/api/users')
+    .send(tooShortUsername)
+    .expect(400)
+
+    await api
+    .post('/api/users')
+    .send(tooShortPassword)
+    .expect(400)
+
+    await api
+    .post('/api/users')
+    .send(tooShortUsernameAndPassword)
+    .expect(400)
+  })
+
+  test('a new blog can be connected to any user', async () => {
+    const usersAtStart = await helper.usersInDb()
+    const initialBlogs = usersAtStart[0].blogs.length
+
+    const newBlogData = {
+      title: 'Everything is connected',
+      author: 'User McBlogger',
+      url: 'http://connect.com',
+      likes: 0,
+      userId: usersAtStart[0].id
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlogData)
+      .expect(201)
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd[0].blogs.length).toBe(initialBlogs + 1)
   })
 })
 
