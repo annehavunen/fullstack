@@ -11,6 +11,11 @@ describe('when there are initially some blogs saved', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
     await Blog.insertMany(helper.initialBlogs)
+
+    await User.deleteMany({})
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({ username: 'root', passwordHash })
+    await user.save()
   })
   
   test('blogs are returned as json', async () => {
@@ -40,16 +45,21 @@ describe('when there are initially some blogs saved', () => {
   
   describe('addition of a new blog', () => {
     test('succeeds with valid data', async () => {
+      const loggedUser = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' })
+
       const newBlog = {
         title: 'Extra title',
         author: 'Extra Writer',
         url: 'http://extrablog.com',
         likes: 2
       }
-    
+
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `Bearer ${loggedUser.body.token}`)
         .expect(201)
         .expect('Content-Type', /application\/json/)
     
@@ -59,25 +69,72 @@ describe('when there are initially some blogs saved', () => {
       const titles = blogsAtEnd.map(b => b.title)
       expect(titles).toContain('Extra title')
     })
-    
+
+    test('fails with status code 401 if token is missing', async () => {
+      const newBlog = {
+        title: 'Extra title',
+        author: 'Extra Writer',
+        url: 'http://extrablog.com',
+        likes: 2
+      }
+
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(401)
+    })
+
+    test('increases the blog amount of the user', async () => {
+      const usersAtStart = await helper.usersInDb()
+      const initialBlogs = usersAtStart[0].blogs.length
+
+      const loggedUser = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' })
+
+      const newBlog = {
+        title: 'Extra title',
+        author: 'Extra Writer',
+        url: 'http://extrablog.com',
+        likes: 2
+      }
+
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .set('Authorization', `Bearer ${loggedUser.body.token}`)
+
+      const usersAtEnd = await helper.usersInDb()
+      expect(usersAtEnd[0].blogs.length).toBe(initialBlogs + 1)
+    })
+
     test('sets the "likes" field value 0 as a default', async () => {
+      const loggedUser = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'sekret' })
+
       const newBlog = {
         title: 'Likeless',
         author: 'Lucky Like',
         url: 'http://likeless.com'
       }
-    
+
       await api
-        .post('/api/blogs')
-        .send(newBlog)
-        .expect(201)
+      .post('/api/blogs')
+      .send(newBlog)
+      .set('Authorization', `Bearer ${loggedUser.body.token}`)
+      .expect(201)
     
       const blogsAtEnd = await helper.blogsInDb()
       const likelessBlog = blogsAtEnd.find((blog) => blog.title === 'Likeless')
       expect(likelessBlog.likes).toBe(0)
     })
-    
+
     test('fails with status code 400 if title or url is missing', async () => {
+      const loggedUser = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'sekret' })
+
       const newBlogWithoutTitle = {
         author: 'Title Less',
         url: 'http://titleless.com',
@@ -93,15 +150,17 @@ describe('when there are initially some blogs saved', () => {
       await api
         .post('/api/blogs')
         .send(newBlogWithoutTitle)
+        .set('Authorization', `Bearer ${loggedUser.body.token}`)
         .expect(400)
     
       await api
         .post('/api/blogs')
         .send(newBlogWithoutUrl)
+        .set('Authorization', `Bearer ${loggedUser.body.token}`)
         .expect(400)
     })
   })
-  
+
   describe('deletion of a blog', () => {
     test('succeeds with status code 204 if id is valid', async () => {
       const blogsAtStart = await helper.blogsInDb()
@@ -124,16 +183,21 @@ describe('when there are initially some blogs saved', () => {
   
   describe('updating a blog', () => {
     test('succeeds with valid data', async () => {
+      const loggedUser = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'sekret' })
+
       const newBlogData = {
         title: 'New blog',
         author: 'Blog Newton',
         url: 'http://newblog.com',
         likes: 0,
       }
-    
+
       const newBlog = await api
         .post('/api/blogs')
         .send(newBlogData)
+        .set('Authorization', `Bearer ${loggedUser.body.token}`)
         .expect(201)
     
       const updatedBlogData = {
@@ -278,27 +342,6 @@ describe('when there is initially one user at db', () => {
     .post('/api/users')
     .send(tooShortUsernameAndPassword)
     .expect(400)
-  })
-
-  test('a new blog can be connected to any user', async () => {
-    const usersAtStart = await helper.usersInDb()
-    const initialBlogs = usersAtStart[0].blogs.length
-
-    const newBlogData = {
-      title: 'Everything is connected',
-      author: 'User McBlogger',
-      url: 'http://connect.com',
-      likes: 0,
-      userId: usersAtStart[0].id
-    }
-
-    await api
-      .post('/api/blogs')
-      .send(newBlogData)
-      .expect(201)
-
-    const usersAtEnd = await helper.usersInDb()
-    expect(usersAtEnd[0].blogs.length).toBe(initialBlogs + 1)
   })
 })
 

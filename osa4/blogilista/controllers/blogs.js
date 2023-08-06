@@ -8,7 +8,8 @@ const getTokenFrom = request => {
   if (authorization && authorization.startsWith('Bearer ')) {
     return authorization.replace('Bearer ', '')
   }
-  return null}
+  return null
+}
 
 blogsRouter.get('/', async (request, response) => {
   const blogs = await Blog
