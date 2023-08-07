@@ -194,6 +194,17 @@ describe('when there are initially some blogs saved', () => {
       expect(usersAtEnd[0].blogs).toHaveLength(usersAtStart[0].blogs.length - 1)
     })
 
+    test('fails with status code 404 if id does not exist', async () => {
+      const loggedUser = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'sekret' })
+
+      await api
+      .delete(`/api/blogs/111111111111111111111111`)
+      .set('Authorization', `Bearer ${loggedUser.body.token}`)
+      .expect(404)
+    })
+
     test('fails with status code 401 if token is missing', async () => {
       const blogsAtStart = await helper.blogsInDb()
       await api
@@ -202,6 +213,37 @@ describe('when there are initially some blogs saved', () => {
       
       const blogsAtEnd = await helper.blogsInDb()
       expect(blogsAtEnd).toHaveLength(blogsAtStart.length) 
+    })
+
+    test('fails with status code 401 if token does not belong to the creator', async () => {
+    const rightUser = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'sekret' })
+
+    const newBlog = {
+      title: 'Extra title',
+      author: 'Extra Writer',
+      url: 'http://extrablog.com',
+      likes: 2
+    }
+
+    const blogToDelete = await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .set('Authorization', `Bearer ${rightUser.body.token}`)
+
+    const passwordHash = await bcrypt.hash('secret', 10)
+    const user2 = new User({ username: 'user2', passwordHash })
+    await user2.save()
+
+    const wrongUser = await api
+      .post('/api/login')
+      .send({ username: 'user2', password: 'secret' })
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.body.id}`)
+      .set('Authorization', `Bearer ${wrongUser.body.token}`)
+      .expect(401)
     })
   })
   
