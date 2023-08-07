@@ -162,22 +162,46 @@ describe('when there are initially some blogs saved', () => {
   })
 
   describe('deletion of a blog', () => {
-    test('succeeds with status code 204 if id is valid', async () => {
+    test('succeeds with status code 204 if id and token are valid', async () => {
+      const loggedUser = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' })
+
+      const newBlog = {
+        title: 'Extra title',
+        author: 'Extra Writer',
+        url: 'http://extrablog.com',
+        likes: 2
+      }
+
+      const blogToDelete = await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .set('Authorization', `Bearer ${loggedUser.body.token}`)
+
+      const usersAtStart = await helper.usersInDb()
       const blogsAtStart = await helper.blogsInDb()
-      const blogToDelete = blogsAtStart[0]
-    
+
       await api
-        .delete(`/api/blogs/${blogToDelete.id}`)
+        .delete(`/api/blogs/${blogToDelete.body.id}`)
+        .set('Authorization', `Bearer ${loggedUser.body.token}`)
         .expect(204)
     
       const blogsAtEnd = await helper.blogsInDb()
-    
-      expect(blogsAtEnd).toHaveLength(
-        helper.initialBlogs.length - 1
-      )
-    
-      const titles = blogsAtEnd.map(r => r.title)
-      expect(titles).not.toContain(blogToDelete.title)
+      expect(blogsAtEnd).toHaveLength(blogsAtStart.length - 1)
+
+      const usersAtEnd = await helper.usersInDb()
+      expect(usersAtEnd[0].blogs).toHaveLength(usersAtStart[0].blogs.length - 1)
+    })
+
+    test('fails with status code 401 if token is missing', async () => {
+      const blogsAtStart = await helper.blogsInDb()
+      await api
+        .delete(`/api/blogs/${blogsAtStart[0].id}`)
+        .expect(401)
+      
+      const blogsAtEnd = await helper.blogsInDb()
+      expect(blogsAtEnd).toHaveLength(blogsAtStart.length) 
     })
   })
   
