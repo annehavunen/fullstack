@@ -56,11 +56,12 @@ const App = () => {
     setUser(null)
   }
 
-const addBlog = (blogObject) => {
-  blogFormRef.current.toggleVisibility()
-  blogService
+  const addBlog = (blogObject) => {
+    blogFormRef.current.toggleVisibility()
+    blogService
     .create(blogObject)
     .then(returnedBlog => {
+      returnedBlog.user = user
       setBlogs(blogs.concat(returnedBlog))
       setNotificationMessage(`a new blog ${returnedBlog.title} by ${returnedBlog.author} added`)
       setTimeout(() => {setNotificationMessage(null)}, 5000)
@@ -69,7 +70,7 @@ const addBlog = (blogObject) => {
       setNotificationMessage(error.response.data['error'])
       setTimeout(() => {setNotificationMessage(null)}, 5000)
     })
-}
+  }
 
   if (user === null) {
     return (
@@ -110,7 +111,7 @@ const addBlog = (blogObject) => {
         <BlogForm createBlog={addBlog} />
       </Togglable>
       {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
+        <Blog key={blog.id} blog={blog} user={blog.user}/>
       )}
     </div>
   )
