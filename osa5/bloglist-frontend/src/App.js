@@ -98,6 +98,14 @@ const App = () => {
       .then(() => {
         setBlogs(blogs.filter(b => b.id !== blog.id))
       })
+      .catch(() => {
+        setNotificationMessage(`Blog ${blog.title} by ${blog.author} has already been removed from server`)
+        setTimeout(() => {setNotificationMessage(null)}, 5000)
+        setBlogs(blogs
+          .filter(b => b.id !== blog.id)
+          .sort((blog1, blog2) => blog2.likes - blog1.likes)
+        )
+      })
     }
   }
 
