@@ -16,7 +16,7 @@ const App = () => {
 
   useEffect(() => {
     blogService.getAll().then(blogs =>
-      setBlogs( blogs )
+      setBlogs(blogs.sort((blog1, blog2) => blog2.likes - blog1.likes))
     )  
   }, [])
 
@@ -72,6 +72,35 @@ const App = () => {
     })
   }
 
+  const likeBlog = (blog) => {
+    const likes = blog.likes + 1
+    const likedBlog = { ...blog, likes: likes}
+    blogService
+    .update(blog.id, likedBlog)
+    .then((returnedBlog) => {
+      returnedBlog.user = blog.user
+      setBlogs(blogs
+        .map(b => b.id !== blog.id ? b :returnedBlog)
+        .sort((blog1, blog2) => blog2.likes - blog1.likes)
+      )
+    })
+    .catch(error => {
+      setNotificationMessage(error.response.data['error'])
+      setTimeout(() => {setNotificationMessage(null)}, 5000)
+    })
+  }
+
+  const removeBlog = (blog) => {
+    const ok = window.confirm(`Remove blog ${blog.title} by ${blog.author}?`)
+    if (ok) {
+      blogService
+      .remove(blog.id)
+      .then(() => {
+        setBlogs(blogs.filter(b => b.id !== blog.id))
+      })
+    }
+  }
+
   if (user === null) {
     return (
       <div>
@@ -111,7 +140,14 @@ const App = () => {
         <BlogForm createBlog={addBlog} />
       </Togglable>
       {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} user={blog.user}/>
+        <Blog 
+          key={blog.id}
+          blog={blog}
+          adder={blog.user}
+          likeBlog={likeBlog}
+          removeBlog={removeBlog}
+          user={user}
+        />
       )}
     </div>
   )
