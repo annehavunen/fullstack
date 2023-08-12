@@ -15,16 +15,18 @@ const Blog = ({blog, adder, likeBlog, removeBlog, user}) => {
   return (
     <div>
       <div style={hideWhenVisible}>
-        <div style={blogStyle}>
-          {blog.title} {blog.author} <button onClick={() => setDetailsVisible(true)}>view</button>
+        <div style={{ ...blogStyle, listStyleType: 'none' }}>
+          <li className='blog'>
+            {blog.title} {blog.author} <button onClick={() => setDetailsVisible(true)}>view</button>
+          </li>
         </div>
       </div>
       <div style={showWhenVisible}>
-        <div style={blogStyle}>
-          <div>{blog.title} {blog.author} <button onClick={() => setDetailsVisible(false)}>hide</button></div>
-          <div>{blog.url}</div>
-          <div>{blog.likes} <button onClick={() => likeBlog(blog)}>like</button></div>
-          <div>{adder.name}</div>
+        <div style={{ ...blogStyle, listStyleType: 'none' }}>
+          <li>{blog.title} {blog.author} <button onClick={() => setDetailsVisible(false)}>hide</button></li>
+          <li className='url'>{blog.url}</li>
+          <li className='likes'>{blog.likes} <button onClick={() => likeBlog(blog)}>like</button></li>
+          <li className='adder'>{adder.name}</li>
           {user.username === adder.username && (
             <button onClick={() => removeBlog(blog)}>remove</button>
           )}
