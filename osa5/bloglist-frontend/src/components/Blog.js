@@ -25,7 +25,7 @@ const Blog = ({blog, adder, likeBlog, removeBlog, user}) => {
         <div style={{ ...blogStyle, listStyleType: 'none' }}>
           <li>{blog.title} {blog.author} <button onClick={() => setDetailsVisible(false)}>hide</button></li>
           <li className='url'>{blog.url}</li>
-          <li className='likes'>{blog.likes} <button onClick={() => likeBlog(blog)}>like</button></li>
+          <li className='likes'>{blog.likes} <button className='likeButton' onClick={() => likeBlog(blog)}>like</button></li>
           <li className='adder'>{adder.name}</li>
           {user.username === adder.username && (
             <button onClick={() => removeBlog(blog)}>remove</button>
